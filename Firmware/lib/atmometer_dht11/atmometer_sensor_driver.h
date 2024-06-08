@@ -62,6 +62,7 @@ public:
     static uint16_t get_sensor_type(TwoWire &i2cHandle, uint8_t address);
     static uint64_t get_sensor_id(TwoWire &i2cHandle, uint8_t address);
     static uint64_t get_sensor_value_1(TwoWire &i2cHandle, uint8_t address);
+    static uint64_t get_sensor_value_2(TwoWire &i2cHandle, uint8_t address);
     static uint16_t get_sensor_error(TwoWire &i2cHandle, uint8_t address);
     static uint8_t get_sensor_config(TwoWire &i2cHandle, uint8_t address);
     static uint8_t get_sensor_update_period(TwoWire &i2cHandle, uint8_t address);
@@ -90,6 +91,34 @@ uint8_t simple_read(TwoWire &i2cHandle, uint8_t i2cAddress, uint8_t registerAddr
     return error;
 }
 
+uint8_t simple_read(TwoWire &i2cHandle, uint8_t i2cAddress, uint8_t registerAddress, uint64_t *value)
+{
+    uint8_t error = 0;
+    error = simple_write(i2cHandle, i2cAddress, Register::SENSOR_READ_ADDRESS, registerAddress);
+    // TODO handle errors
+
+    *value = 0;
+    uint8_t read = 0;
+
+    Wire.requestFrom(i2cAddress, 1);
+    read = Wire.read();
+    *value += (read << 24);
+
+    Wire.requestFrom(i2cAddress, 1);
+    read = Wire.read();
+    *value += (read << 16);
+
+    Wire.requestFrom(i2cAddress, 1);
+    read = Wire.read();
+    *value += (read << 8);
+
+    Wire.requestFrom(i2cAddress, 1);
+    read = Wire.read();
+    *value += (read << 0);
+
+    return error;
+}
+
 uint8_t ATM_Sensor::set_sensor_config(TwoWire &i2cHandle, uint8_t address, uint8_t value)
 {
     return simple_write(i2cHandle, address, Register::SENSOR_CONFIG, value);
@@ -112,17 +141,8 @@ uint8_t ATM_Sensor::set_sensor_config_sequential_read(TwoWire &i2cHandle, uint8_
 
     if (value)
     {
-        Serial.println("error");
-        Serial.println(error);
-        Serial.println("config_value");
-        Serial.println(config_value);
         SET_BIT_VALUE_AT(config_value, ConfigBitField::CBF_SEQUENTIAL_READ, 1);
-        Serial.println("config_value");
-        Serial.println(config_value);
         error = simple_write(i2cHandle, address, Register::SENSOR_CONFIG, config_value);
-        Serial.println("error");
-        Serial.println(error);
-        Serial.println("-*-*-*-*-*-*-*-");
     }
     else
     {
@@ -168,7 +188,20 @@ uint64_t ATM_Sensor::get_sensor_id(TwoWire &i2cHandle, uint8_t address)
 
 uint64_t ATM_Sensor::get_sensor_value_1(TwoWire &i2cHandle, uint8_t address)
 {
-    return 0;
+    uint8_t error;
+    uint64_t value = 0;
+    error = simple_read(i2cHandle, address, Register::SENSOR_VALUE_1_MSB1, &value);
+
+    return value;
+}
+
+uint64_t ATM_Sensor::get_sensor_value_2(TwoWire &i2cHandle, uint8_t address)
+{
+    uint8_t error;
+    uint64_t value = 0;
+    error = simple_read(i2cHandle, address, Register::SENSOR_VALUE_2_MSB1, &value);
+
+    return value;
 }
 
 uint16_t ATM_Sensor::get_sensor_error(TwoWire &i2cHandle, uint8_t address)

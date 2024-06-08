@@ -31,12 +31,20 @@ void loop()
 	{
 		Serial.println("I2C device found");
 		Serial.print("sensor type: ");
-
 		Serial.println(ATM_Sensor::get_sensor_type(Wire, SLAVE_ADDRESS));
-		Serial.println("OK done");
+		Serial.print("sensor humidity: ");
+		uint64_t value = ATM_Sensor::get_sensor_value_1(Wire, SLAVE_ADDRESS);
+		float real_value = (float)value / 1000;
+		Serial.println(real_value);
+
+		Serial.print("sensor temperature: ");
+		value = ATM_Sensor::get_sensor_value_2(Wire, SLAVE_ADDRESS);
+		real_value = (float)value / 1000;
+		Serial.println(real_value);
+
 		Serial.println("\n");
 	}
 
 	Serial.println("waiting");
-	delay(1000);
+	delay(2000);
 }
